@@ -12,4 +12,6 @@ if __name__ == "__main__":
     ok1 = project.Project(name='project2', cityType=cityInfo.CityType.low, dateStart=datetime.strptime('9/2/15', '%m/%d/%y'), dateEnd=datetime.strptime('9/5/15', '%m/%d/%y'))
     mySet = [ok1, ok]
 
+    yo = project.Project.getReimbursement(projectSet=mySet)
+
     print(dd.days)
