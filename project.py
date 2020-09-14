@@ -11,7 +11,7 @@ class Project:
         
     @classmethod
     def datesOverlap(self, d1, d2):
-        return (d2 - d1) > timedelta(days=1)
+        return (d2 - d1) > timedelta(days=2)
     @classmethod
     def getDateRange(self, d1, d2):
         return ((d2 + timedelta(days=1)) - d1).days
@@ -40,7 +40,7 @@ class Project:
                         reimbursement += (Project.getDateRange(projectSet[i-1].dateEnd, projectSet[i-1].dateStart) - 1)  * cityInfo.TravelCost.LowCityFull
                     else:
                         reimbursement += (Project.getDateRange(projectSet[i-1].dateEnd, projectSet[i-1].dateStart) - 1)  * cityInfo.TravelCost.HighCityFull
-                else if (Project.getDateRange(projectSet[i-1].dateEnd, projectSet[i-1].dateStart)) >= 2:
+                elif (Project.getDateRange(projectSet[i-1].dateEnd, projectSet[i-1].dateStart)) > 2:
                     if lowcost:
                         reimbursement += (Project.getDateRange(projectSet[i-1].dateEnd, projectSet[i-1].dateStart) - 2)  * cityInfo.TravelCost.LowCityFull
                         reimbursement += cityInfo.TravelCost.LowCityTravel
@@ -49,7 +49,12 @@ class Project:
                         reimbursement += cityInfo.TravelCost.HighCityTravel
                 else:
                     # the days are short
-            
+                    if lowcost:
+                        reimbursement += cityInfo.TravelCost.LowCityFull
+                        reimbursement += cityInfo.TravelCost.LowCityTravel
+                    else:
+                        reimbursement += cityInfo.TravelCost.HighCityFull
+                        reimbursement += cityInfo.TravelCost.HighCityTravel
 
             # if they are then we dont have "travel" days, use full
         
