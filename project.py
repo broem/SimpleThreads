@@ -38,10 +38,18 @@ class Project:
                 if lowcost:
                     # we need to remove prev project travel and add 1 prev day
                     ok = (Project.getDateRange(projectSet[i-1].dateEnd, projectSet[i].dateEnd) - 2)
-                    reimbursement +=  ok * cityInfo.TravelCost.LowCityFull
+                    if ok >= 0:
+                        reimbursement +=  ok * cityInfo.TravelCost.LowCityFull
+                        reimbursement += cityInfo.TravelCost.LowCityTravel
+                        if ok > 0:
+                            reimbursement += Project.travelModifier(projectSet[i-1])
                 else:
-                    reimbursement += (Project.getDateRange(projectSet[i-1].dateEnd, projectSet[i].dateEnd) - 2)  * cityInfo.TravelCost.HighCityFull
-                reimbursement += Project.travelModifier(projectSet[i-1])
+                    ok = (Project.getDateRange(projectSet[i-1].dateEnd, projectSet[i].dateEnd) - 2)
+                    if ok >= 0:
+                        reimbursement +=  ok * cityInfo.TravelCost.HighCityFull
+                        reimbursement += cityInfo.TravelCost.HighCityTravel
+                        if ok > 0:
+                            reimbursement += Project.travelModifier(projectSet[i-1])
             # not a single day
             elif (Project.getDateRange(projectSet[i].dateStart, projectSet[i].dateEnd)) >= 2:
                 if lowcost:

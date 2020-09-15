@@ -6,6 +6,6 @@ class CityType(Enum):
 
 class TravelCost:
     LowCityTravel = 45
-    HighCityTravel = 66
-    LowCityFull = 55
-    HighCityFull = 103
+    HighCityTravel = 55
+    LowCityFull = 75
+    HighCityFull = 85
