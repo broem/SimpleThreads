@@ -12,20 +12,16 @@ class Project:
     @classmethod
     def datesOverlap(self, d1, d2):
         return (d2 - d1) <= timedelta(days=1)
+
     @classmethod
     def getDateRange(self, low, high):
         return ((high + timedelta(days=1)) - low).days
-    @classmethod
-    def travelModifier(self, proj):
-        if proj.cityType == cityInfo.CityType.low:
-            return cityInfo.TravelCost.LowCityFull - cityInfo.TravelCost.LowCityTravel
-        else:
-            return cityInfo.TravelCost.HighCityFull - cityInfo.TravelCost.HighCityTravel
-    
+
     @classmethod
     def mergeOverlappedLeft(self, toBeMergedInto, toBeMergedWith, distance):
         merged = toBeMergedInto[:(len(toBeMergedInto)-distance)] + toBeMergedWith
         return merged
+
     @classmethod
     def mergeOverlappedRight(self, toBeMergedInto, toBeMergedWith, distance):
         merged = toBeMergedWith + toBeMergedInto[distance:]
@@ -49,35 +45,37 @@ class Project:
                 curList = [cityInfo.CityType.high]*Project.getDateRange(project.dateStart, project.dateEnd)
             # check if the prev start date are in the same range
             if i != 0 and Project.datesOverlap(projectSet[i-1].dateEnd, project.dateStart):
-                distanceOverlapped = Project.getDateRange(projectSet[i-1].dateEnd, project.dateStart)
-                # distance overlapped > 2 means they are not sitting next to each other
-                if distanceOverlapped > 2:
+                distanceOverlapped = Project.getDateRange(project.dateStart, projectSet[i-1].dateEnd)
+                # distance overlapped >= 2 means they are not sitting next to each other
+                if distanceOverlapped >= 2:
                     # check to see if they are different city types, highs take precident
-                    if projectSet[i-1].cityType != lowcost:
+                    if projectSet[i-1].cityType != cityInfo.CityType.low:
                         if lowcost:
-                            merged = Project.mergeOverlappedRight(curList, reimbSet[i-1], distanceOverlapped)
+                            reimbSet[len(reimbSet)-1] = Project.mergeOverlappedRight(curList, reimbSet[len(reimbSet)-1], distanceOverlapped)
                         else:
-                            merged = Project.mergeOverlappedRight(reimbSet[i-1], curList, distanceOverlapped)
+                            reimbSet[i-1] = Project.mergeOverlappedRight(reimbSet[len(reimbSet)-1], curList, distanceOverlapped)
+                    else:
+                        reimbSet[len(reimbSet)-1] = Project.mergeOverlappedRight(reimbSet[len(reimbSet)-1], curList, distanceOverlapped)
                 else:
-                    merged = Project.mergeOverlappedRight(reimbSet[i-1], curList, 0)
-
-            # not a single day
-            elif (Project.getDateRange(projectSet[i].dateStart, projectSet[i].dateEnd)) >= 2:
-                if lowcost:
-                    reimbursement += cityInfo.TravelCost.LowCityTravel
-                    reimbursement += (Project.getDateRange(projectSet[i].dateStart, projectSet[i].dateEnd) - 2)  * cityInfo.TravelCost.LowCityFull
-                    reimbursement += cityInfo.TravelCost.LowCityTravel
-                else:
-                    reimbursement += cityInfo.TravelCost.HighCityTravel
-                    reimbursement += (Project.getDateRange(projectSet[i].dateStart, projectSet[i].dateEnd) - 2)  * cityInfo.TravelCost.HighCityFull
-                    reimbursement += cityInfo.TravelCost.HighCityTravel
-            # a single day
+                    reimbSet[len(reimbSet)-1] = Project.mergeOverlappedRight(curList, reimbSet[len(reimbSet)-1], distanceOverlapped)
             else:
-                # the days are short
-                if lowcost:
-                    reimbursement += cityInfo.TravelCost.LowCityTravel
+                reimbSet.append(curList)
+        
+        # calculate the real reimbursement
+        for i, projSet in enumerate(reimbSet):
+            for j, proj in enumerate(projSet):
+                # these are 
+                if j == 0 or j == len(projSet) - 1:
+                    if proj == cityInfo.CityType.low:
+                        reimbursement += cityInfo.TravelCost.LowCityTravel
+                    else:
+                        reimbursement += cityInfo.TravelCost.HighCityTravel
                 else:
-                    reimbursement += cityInfo.TravelCost.HighCityTravel
+                    if proj == cityInfo.CityType.low:
+                        reimbursement += cityInfo.TravelCost.LowCityFull
+                    else:
+                        reimbursement += cityInfo.TravelCost.HighCityFull
+
         
         return reimbursement
 
