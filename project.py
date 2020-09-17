@@ -23,33 +23,44 @@ class Project:
             return cityInfo.TravelCost.HighCityFull - cityInfo.TravelCost.HighCityTravel
     
     @classmethod
+    def mergeOverlappedLeft(self, toBeMergedInto, toBeMergedWith, distance):
+        merged = toBeMergedInto[:(len(toBeMergedInto)-distance)] + toBeMergedWith
+        return merged
+    @classmethod
+    def mergeOverlappedRight(self, toBeMergedInto, toBeMergedWith, distance):
+        merged = toBeMergedWith + toBeMergedInto[distance:]
+        return merged
+    
+    @classmethod
     def getReimbursement(cls, projectSet):
         reimbursement = 0
+        reimbSet = []
         if len(projectSet) <= 0:
             return reimbursement
 
         projectSet = sorted(projectSet, key=lambda project: project.dateStart)
         
         for i, project in enumerate(projectSet):
-            
+            curList = []
             lowcost = project.cityType == cityInfo.CityType.low
+            if lowcost:
+                curList = [cityInfo.CityType.low]*Project.getDateRange(project.dateStart, project.dateEnd)
+            else:
+                curList = [cityInfo.CityType.high]*Project.getDateRange(project.dateStart, project.dateEnd)
             # check if the prev start date are in the same range
             if i != 0 and Project.datesOverlap(projectSet[i-1].dateEnd, project.dateStart):
-                if lowcost:
-                    # we need to remove prev project travel and add 1 prev day
-                    ok = (Project.getDateRange(projectSet[i-1].dateEnd, projectSet[i].dateEnd) - 2)
-                    if ok >= 0:
-                        reimbursement +=  ok * cityInfo.TravelCost.LowCityFull
-                        reimbursement += cityInfo.TravelCost.LowCityTravel
-                        if ok > 0:
-                            reimbursement += Project.travelModifier(projectSet[i-1])
+                distanceOverlapped = Project.getDateRange(projectSet[i-1].dateEnd, project.dateStart)
+                # distance overlapped > 2 means they are not sitting next to each other
+                if distanceOverlapped > 2:
+                    # check to see if they are different city types, highs take precident
+                    if projectSet[i-1].cityType != lowcost:
+                        if lowcost:
+                            merged = Project.mergeOverlappedRight(curList, reimbSet[i-1], distanceOverlapped)
+                        else:
+                            merged = Project.mergeOverlappedRight(reimbSet[i-1], curList, distanceOverlapped)
                 else:
-                    ok = (Project.getDateRange(projectSet[i-1].dateEnd, projectSet[i].dateEnd) - 2)
-                    if ok >= 0:
-                        reimbursement +=  ok * cityInfo.TravelCost.HighCityFull
-                        reimbursement += cityInfo.TravelCost.HighCityTravel
-                        if ok > 0:
-                            reimbursement += Project.travelModifier(projectSet[i-1])
+                    merged = Project.mergeOverlappedRight(reimbSet[i-1], curList, 0)
+
             # not a single day
             elif (Project.getDateRange(projectSet[i].dateStart, projectSet[i].dateEnd)) >= 2:
                 if lowcost:
